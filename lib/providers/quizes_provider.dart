@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -14,20 +16,20 @@ class QuizzesProvider extends ChangeNotifier {
 
   QuizzesProvider() {
     Stream<List<Quiz>> quizzesStream = quizzesRef.onValue.map((event) {
-      final Map? data = event.snapshot.value as Map?;
+      final data = event.snapshot.value as LinkedHashMap<Object?, Object?>?;
       if (data == null) {
         return [];
       }
-      return data.entries.map((entry) => Quiz.fromJson(entry.value)).toList();
+      return data.cast<String, dynamic>().entries.map((entry) => Quiz.fromJson(entry.value)).toList();
     });
     Stream<List<Quiz>> privateQuizzesStream =
         privateQuizzesRef.onValue.map((event) {
-      final Map? data = event.snapshot.value as Map?;
+      final data = event.snapshot.value as LinkedHashMap<Object?, Object?>?;
       if (data == null) {
         return [];
       }
       List<Quiz> quizzesList =
-          data.entries.map((entry) => Quiz.fromJson(entry.value)).toList();
+          data.cast<String, dynamic>().entries.map((entry) => Quiz.fromJson(entry.value)).toList();
       for (var i = 0; i < quizzesList.length; i++) {
         quizzesList[i].isPrivate = true;
       }
