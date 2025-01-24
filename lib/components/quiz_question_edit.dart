@@ -56,8 +56,6 @@ class _QuizQuestionEditState extends State<QuizQuestionEdit> {
                           return "Média";
                         case Difficulty.hard:
                           return "Difícil";
-                        default:
-                          return "Indefinido";
                       }
                     }()),
                   );

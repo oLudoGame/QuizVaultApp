@@ -1,5 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quizz_vault_app/components/quiz_question_list.dart';
@@ -30,11 +30,11 @@ class _QuizDetailsState extends State<QuizDetails> {
   }
 
   Future<QzUser> loadOwner() async {
-    var data = await FirebaseDatabase.instance
-        .ref('users')
-        .child(widget.quiz.ownerId)
+    var data = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.quiz.ownerId)
         .get();
-    return QzUser.fromJson(data.value as Map<String, dynamic>);
+    return QzUser.fromJson(data.data()!);
   }
 
   @override

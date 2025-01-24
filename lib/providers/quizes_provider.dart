@@ -1,7 +1,5 @@
-import 'dart:collection';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quizz_vault_app/models/quiz.dart';
@@ -10,59 +8,68 @@ class QuizzesProvider extends ChangeNotifier {
   List<Quiz> quizzes = [];
   List<Quiz> privateQuizzes = [];
   bool loading = true;
-  DatabaseReference quizzesRef = FirebaseDatabase.instance.ref('quizzes');
-  DatabaseReference privateQuizzesRef = FirebaseDatabase.instance
-      .ref('private_quizzes/${FirebaseAuth.instance.currentUser!.uid}');
+
+  CollectionReference publicQuizzesRef =
+      FirebaseFirestore.instance.collection('quizzes');
+
+  CollectionReference privateQuizzesRef = FirebaseFirestore.instance
+      .collection('private_quizzes')
+      .doc(FirebaseAuth.instance.currentUser!.uid)
+      .collection('quizzes');
 
   QuizzesProvider() {
-    Stream<List<Quiz>> quizzesStream = quizzesRef.onValue.map((event) {
-      final data = event.snapshot.value as dynamic;
-      if (data == null) {
-        return [];
-      }
-      return data.values.map((value) => Quiz.fromJson(value)).toList();
-    });
-    Stream<List<Quiz>> privateQuizzesStream =
-        privateQuizzesRef.onValue.map((event) {
-      final data = event.snapshot.value as LinkedHashMap<Object?, Object?>?;
-      if (data == null) {
-        return [];
-      }
-      List<Quiz> quizzesList =
-          data.cast<String, dynamic>().entries.map((entry) => Quiz.fromJson(entry.value)).toList();
-      for (var i = 0; i < quizzesList.length; i++) {
-        quizzesList[i].isPrivate = true;
-      }
-      return quizzesList;
-    });
-
-    privateQuizzesStream.listen((newQuizes) {
-      privateQuizzes = newQuizes;
+    // Stream for public quizzes
+    publicQuizzesRef.snapshots().listen((snapshot) {
+      quizzes = snapshot.docs.map((doc) {
+        Quiz quiz = Quiz.fromJson(doc.data() as Map<String, dynamic>);
+        quiz.id = doc.id; // Assign Firestore doc ID to the quiz
+        return quiz;
+      }).toList();
       loading = false;
       notifyListeners();
     });
 
-    quizzesStream.listen((newQuizes) {
-      quizzes = newQuizes;
+    // Stream for private quizzes
+    privateQuizzesRef.snapshots().listen((snapshot) {
+      privateQuizzes = snapshot.docs.map((doc) {
+        Quiz quiz = Quiz.fromJson(doc.data() as Map<String, dynamic>);
+        quiz.id = doc.id; // Assign Firestore doc ID to the quiz
+        quiz.isPrivate = true; // Mark as private
+        return quiz;
+      }).toList();
       loading = false;
       notifyListeners();
     });
   }
 
-  Future<void> addQuiz() async {
-    DatabaseReference newQuiz = quizzesRef.push();
-    await newQuiz.set(Quiz(
-      description: "Descrição",
-      ownerId: FirebaseAuth.instance.currentUser!.uid,
-      questions: [],
-      title: "Título",
-      id: newQuiz.key!,
-      isPrivate: false,
-    ).toJson());
+  Future<void> addQuiz({bool isPrivate = false}) async {
+    try {
+      CollectionReference ref = isPrivate ? privateQuizzesRef : publicQuizzesRef;
+      DocumentReference newQuiz = await ref.add(Quiz(
+        id: ref.id,
+        description: "Descrição",
+        ownerId: FirebaseAuth.instance.currentUser!.uid,
+        questions: [],
+        title: "Título",
+        isPrivate: isPrivate,
+      ).toJson());
+
+      // Optionally set the quiz ID if needed
+      await newQuiz.update({'id': newQuiz.id});
+    } catch (e) {
+      debugPrint('Erro ao adicionar quiz: $e');
+      throw Exception("Não foi possível adicionar o quiz.");
+    }
   }
 
-  Future<void> removeQuiz(String quizId) async {
-    await quizzesRef.child(quizId).remove();
+  Future<void> removeQuiz(String quizId, {bool isPrivate = false}) async {
+    try {
+      CollectionReference ref = isPrivate ? privateQuizzesRef : publicQuizzesRef;
+      await ref.doc(quizId).delete();
+    } catch (e) {
+      debugPrint('Erro ao remover quiz: $e');
+      throw Exception("Não foi possível remover o quiz.");
+    }
   }
 
   static QuizzesProvider of(BuildContext context, {bool listen = true}) {

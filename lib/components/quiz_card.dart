@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:quizz_vault_app/components/quiz_details.dart';
 import 'package:quizz_vault_app/models/quiz.dart';
 import 'package:quizz_vault_app/providers/quizes_provider.dart';

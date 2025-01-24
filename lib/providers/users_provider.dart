@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:quizz_vault_app/models/qz_user.dart';
 
@@ -7,19 +7,14 @@ class UsersProvider extends ChangeNotifier {
   bool loading = true;
 
   UsersProvider() {
-    Stream<List<QzUser>> stream =
-        FirebaseDatabase.instance.ref('users').onValue.map((event) {
-      final Map? data = event.snapshot.value as Map?;
-      if (data == null) {
-        return [];
-      }
-      return data.entries
-          .map((entry) => QzUser.fromJson(entry.value))
-          .toList();
-    });
+    // Stream para acompanhar alterações em tempo real na coleção "users"
+    FirebaseFirestore.instance.collection('users').snapshots().listen((snapshot) {
+      users = snapshot.docs.map((doc) {
+        QzUser user = QzUser.fromJson(doc.data());
+        user.id = doc.id; // Atribui o ID do documento ao modelo, se necessário
+        return user;
+      }).toList();
 
-    stream.listen((newUsers) {
-      users = newUsers;
       loading = false;
       notifyListeners();
     });

@@ -109,7 +109,7 @@ class EditButtons extends StatelessWidget {
               ),
             );
 
-            if (delete) {
+            if (delete && context.mounted) {
               QuizProvider.of(context, listen: false)
                   .removeQuestion(question.id);
             }
