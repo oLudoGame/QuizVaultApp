@@ -17,7 +17,7 @@ class Quiz {
     required this.isPrivate,
   });
 
-  factory Quiz.fromJson(Map<String, dynamic> json) {
+  factory Quiz.fromJson(dynamic json) {
     var questionsJson = json['questions'] as Map<String, dynamic>? ?? {};
     var questionsList = questionsJson.values
         .map((questionJson) => QuizQuestion.fromJson(questionJson))

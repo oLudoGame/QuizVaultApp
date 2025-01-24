@@ -16,11 +16,11 @@ class QuizzesProvider extends ChangeNotifier {
 
   QuizzesProvider() {
     Stream<List<Quiz>> quizzesStream = quizzesRef.onValue.map((event) {
-      final data = event.snapshot.value as LinkedHashMap<Object?, Object?>?;
+      final data = event.snapshot.value as dynamic;
       if (data == null) {
         return [];
       }
-      return data.cast<String, dynamic>().entries.map((entry) => Quiz.fromJson(entry.value)).toList();
+      return data.values.map((value) => Quiz.fromJson(value)).toList();
     });
     Stream<List<Quiz>> privateQuizzesStream =
         privateQuizzesRef.onValue.map((event) {
