@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:quizz_vault_app/models/quiz_question.dart';
 
 class Quiz {
@@ -20,10 +18,9 @@ class Quiz {
   });
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> questionsJson = json['questions'] ?? {};
-    final List<QuizQuestion> questionsList = questionsJson.values
-        .map((questionJson) =>
-            QuizQuestion.fromJson(jsonDecode(jsonEncode(questionJson))))
+    final List<dynamic> questionsJson = json['questions'] ?? [];
+    final List<QuizQuestion> questionsList = questionsJson
+        .map((questionJson) => QuizQuestion.fromJson(questionJson))
         .toList();
     return Quiz(
       id: json['id'],
@@ -41,9 +38,7 @@ class Quiz {
       'title': title,
       'description': description,
       'owner_id': ownerId,
-      'questions': {
-        for (var question in questions) question.id: question.toJson()
-      },
+      'questions': [for (var question in questions) question.toJson()],
     };
   }
 }

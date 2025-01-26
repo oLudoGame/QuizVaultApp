@@ -44,7 +44,8 @@ class QuizzesProvider extends ChangeNotifier {
 
   Future<void> addQuiz({bool isPrivate = false}) async {
     try {
-      CollectionReference ref = isPrivate ? privateQuizzesRef : publicQuizzesRef;
+      CollectionReference ref =
+          isPrivate ? privateQuizzesRef : publicQuizzesRef;
       DocumentReference newQuiz = await ref.add(Quiz(
         id: ref.id,
         description: "Descrição",
@@ -59,12 +60,15 @@ class QuizzesProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Erro ao adicionar quiz: $e');
       throw Exception("Não foi possível adicionar o quiz.");
+    } finally {
+      notifyListeners();
     }
   }
 
   Future<void> removeQuiz(String quizId, {bool isPrivate = false}) async {
     try {
-      CollectionReference ref = isPrivate ? privateQuizzesRef : publicQuizzesRef;
+      CollectionReference ref =
+          isPrivate ? privateQuizzesRef : publicQuizzesRef;
       await ref.doc(quizId).delete();
     } catch (e) {
       debugPrint('Erro ao remover quiz: $e');

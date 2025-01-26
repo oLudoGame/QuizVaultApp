@@ -37,10 +37,8 @@ class QuizProvider extends ChangeNotifier {
   }
 
   Future<void> addQuestion() async {
-    DocumentReference newQuestionRef =
-        await ref().collection('questions').add({});
     QuizQuestion newQuestion = QuizQuestion(
-      id: newQuestionRef.id,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       question: "Pergunta da questão",
       answers: [],
       difficulty: Difficulty.easy,
@@ -50,7 +48,7 @@ class QuizProvider extends ChangeNotifier {
         Answer(id: i.toString(), correct: i == 0, text: 'Resposta'),
       );
     }
-    await newQuestionRef.set(newQuestion.toJson());
+    await saveQuestion(newQuestion);
   }
 
   Future<void> saveQuiz(Quiz newQuiz) async {
@@ -82,20 +80,27 @@ class QuizProvider extends ChangeNotifier {
   }
 
   Future<void> saveQuestion(QuizQuestion question) async {
-    await ref()
-        .collection('questions')
-        .doc(question.id)
-        .update(question.toJson());
+    final questions = quiz.questions;
+    final index = questions.indexWhere((q) => q.id == question.id);
+    if (index == -1) {
+      questions.add(question);
+    } else {
+      questions[index] = question;
+    }
+    await ref().update({'questions': questions.map((q) => q.toJson())});
   }
 
   Future<void> removeQuestion(String questionId) async {
-    await ref().collection('questions').doc(questionId).delete();
+    await ref().update({
+      'questions': [
+        for (var question in quiz.questions)
+          if (question.id != questionId) question.toJson()
+      ]
+    });
   }
 
   Future<void> clearQuestions() async {
-    quiz.questions = [];
-    final query = await ref().collection('questions').get();
-    await Future.wait(query.docs.map((doc) => doc.reference.delete()));
+    await ref().update({'questions': []});
   }
 
   static QuizProvider of(BuildContext context, {bool listen = true}) {

@@ -32,7 +32,7 @@ class QuizQuestion {
     return {
       'id': id,
       'question': question,
-      'answers': {for (var answer in answers) answer.id: answer.toJson()},
+      'answers': [for (var answer in answers) answer.toJson()],
       'difficulty': difficulty.index,
     };
   }
